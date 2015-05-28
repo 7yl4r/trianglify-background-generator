@@ -121,11 +121,16 @@ function updateCustomColours() {
     $("#custom-colours .palette-colour").each( function(){
         colors[$(this).data('colour-index')] = $(this).val();
     });
-    console.log(colors);
     customPalette = new Palette("custom", colors);
     $("#custom-colours").html(createPallateDisplayHTML(customPalette, 'custom', true));
     updateScreen();
 }
+
+$('#add-colour').on('click', function(){
+    customPalette.colors.push("#33AA33");
+    $("#custom-colours").html(createPallateDisplayHTML(customPalette, 'custom', true));
+    updateScreen();
+});
 
 // returns html for displaying palette with given index
 // uses span if editable != True, else uses input type=color
@@ -138,7 +143,7 @@ function createPallateDisplayHTML(palette, index, editable){
 
     $(palette.colors).each(function(colorIndex){
         if (typeof editable !== "undefined" && editable){
-            var paletteColor = $("<input type='text' value='" + this + "' class='palette-colour' data-colour-index='" + colorIndex + "'></span>");
+            var paletteColor = $("<input type='color' value='" + this + "' class='palette-colour' data-colour-index='" + colorIndex + "'></span>");
         } else {
             var paletteColor = $("<span class='palette-colour' data-colour-index='" + colorIndex + "'></span>");
         }
