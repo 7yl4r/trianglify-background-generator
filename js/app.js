@@ -4,6 +4,7 @@ var currentPattern;
 var palettes = [];
 var currentXPalette;
 var currentYPalette;
+var customPalette;
 
 var NO_OF_PALETTES_TO_RETRIEVE = 100;
 
@@ -107,10 +108,45 @@ function getColourSchemes(limit) {
 
         currentXPalette = palettes[0];
         currentYPalette = palettes[0];
+        updateCustomColours();
         updateScreen();
         $("#loading").fadeOut(500);
       }
   });
+}
+
+// updates custom colour palette
+function updateCustomColours() {
+    var colors = ["#AA3333", "#3333AA"];
+    $("#custom-colours .palette-colour").each( function(){
+        colors[$(this).data('colour-index')] = $(this).val();
+    });
+    console.log(colors);
+    customPalette = new Palette("custom", colors);
+    $("#custom-colours").html(createPallateDisplayHTML(customPalette, 'custom', true));
+    updateScreen();
+}
+
+// returns html for displaying palette with given index
+// uses span if editable != True, else uses input type=color
+//     palette : Palette object  to display
+//     index : index of the Pallate for data-attribute
+//     (editable) : (optional) makes color editable
+function createPallateDisplayHTML(palette, index, editable){
+    var cont = $("<div class='palette-cont clearfix' data-palette-index='" + index + "'></div>");
+    var noOfColors = palette.colors.length;
+
+    $(palette.colors).each(function(colorIndex){
+        if (typeof editable !== "undefined" && editable){
+            var paletteColor = $("<input type='text' value='" + this + "' class='palette-colour' data-colour-index='" + colorIndex + "'></span>");
+        } else {
+            var paletteColor = $("<span class='palette-colour' data-colour-index='" + colorIndex + "'></span>");
+        }
+        $(paletteColor).css({"width": (100 / noOfColors) + "%",
+            "background-color": this});
+        $(cont).append(paletteColor);
+    });
+    return cont;
 }
 
 // Adds a scrollable div to the page, containing clickable
@@ -119,39 +155,41 @@ function addColourList() {
   addColorbrewerPalettes();
   
   $(palettes).each(function(index){
-    var cont = $("<div class='palette-cont clearfix' data-palette-index='" + index + "'></div>");
-    var palette = this;
-    var noOfColors = palette.colors.length;
-
-    $(palette.colors).each(function(){
-      var paletteColor = $("<span class='palette-colour'></span>");
-      $(paletteColor).css({"width": (100 / noOfColors) + "%",
-                            "background-color": this});
-      $(cont).append(paletteColor);
-    });
-    $("#colour-list").append(cont);
+    $("#colour-list").append(createPallateDisplayHTML(this, index));
   });
 
-  $("#colour-list").on("click", ".palette-cont", function() {
-    var paletteIndex = $(this).data("palette-index");
+  function selectColorPalette(event) {
+      var paletteIndex = $(this).data("palette-index");
+      if (paletteIndex == 'custom'){
+          var palette = customPalette;
+      } else {
+          var palette = palettes[paletteIndex];
+      }
 
-    $(".palette-cont").css("border", "none");
-    $(this).css("border", "3px solid #444444");
+      $(".palette-cont").css("border", "none");
+      $(this).css("border", "3px solid #444444");
 
-    switch($("[type='radio']:checked").val()) {
-      case "x":
-        currentXPalette = palettes[paletteIndex];
-        break;
-      case "y":
-        currentYPalette = palettes[paletteIndex];
-        break;
-      case "z":
-        currentXPalette = palettes[paletteIndex];
-        currentYPalette = palettes[paletteIndex];
-        break;
-    }
-    updateScreen();
+      switch($("[type='radio']:checked").val()) {
+          case "x":
+              currentXPalette = palette;
+              break;
+          case "y":
+              currentYPalette = palette;
+              break;
+          case "z":
+              currentXPalette = palette;
+              currentYPalette = palette;
+              break;
+      }
+      updateScreen();
+  }
+
+  $(document).on("change", "#custom-colours .palette-colour", function(event){
+      console.log('modifying colour #', $(this).data("colour-index"));
+      updateCustomColours();
   });
+  $("#custom-colours").on("click", ".palette-cont", selectColorPalette);
+  $("#colour-list").on("click", ".palette-cont", selectColorPalette);
 }
 
 // UI initialisers and event handlers
